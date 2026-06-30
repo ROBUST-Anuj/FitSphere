@@ -1,0 +1,81 @@
+name: fitsphere
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-fitsphere}
+      POSTGRES_USER: ${POSTGRES_USER:-fitsphere}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fitsphere}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fitsphere}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build:
+      context: .
+      args:
+        BUILD_ENV: local
+    command: python manage.py runserver 0.0.0.0:8000
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+    volumes:
+      - .:/app
+    ports:
+      - "${WEB_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    user: "1000:1000"
+    healthcheck:
+       test: ["CMD", "python", "manage.py", "check"]
+       interval: 30s
+       timeout: 10s
+       retries: 5
+
+  celery_worker:
+    build:
+      context: .
+      args:
+        BUILD_ENV: local
+    command: celery -A config worker --loglevel=info
+    env_file: .env
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+    volumes:
+      - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    user: "1000:1000"
+    healthcheck:
+      test: ["CMD", "celery", "-A", "config", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+volumes:
+  postgres_data:
