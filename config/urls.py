@@ -19,6 +19,10 @@ urlpatterns = [
         "api/v1/",
         include("apps.tenants.api.urls"),
     ),
+    path(
+        "api/v1/",
+        include("apps.workouts.api.urls"),
+    ),
 ]
 
 if settings.DEBUG:
