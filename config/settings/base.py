@@ -38,7 +38,11 @@ THIRD_PARTY_APPS = [
 
 # Each app added here is also added to apps/<name>/apps.py with an explicit
 # AppConfig — this lets us namespace under "apps." cleanly.
-LOCAL_APPS = ["apps.core", "apps.accounts"]
+LOCAL_APPS = [
+    "apps.core",
+    "apps.accounts",
+    "apps.tenants",
+]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 

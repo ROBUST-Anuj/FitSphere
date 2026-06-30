@@ -51,11 +51,7 @@ class HealthCheckView(APIView):
                 "status": "healthy" if all_healthy else "unhealthy",
                 "checks": checks,
             },
-            status=(
-                status.HTTP_200_OK
-                if all_healthy
-                else status.HTTP_503_SERVICE_UNAVAILABLE
-            ),
+            status=(status.HTTP_200_OK if all_healthy else status.HTTP_503_SERVICE_UNAVAILABLE),
         )
 
     @staticmethod

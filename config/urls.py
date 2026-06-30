@@ -15,6 +15,10 @@ urlpatterns = [
         "api/v1/auth/",
         include("apps.accounts.api.urls"),
     ),
+    path(
+        "api/v1/",
+        include("apps.tenants.api.urls"),
+    ),
 ]
 
 if settings.DEBUG:
