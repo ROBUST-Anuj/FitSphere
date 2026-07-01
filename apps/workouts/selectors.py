@@ -2,71 +2,97 @@ from __future__ import annotations
 
 from uuid import UUID
 
-from django.db.models import QuerySet
+from django.db.models import Q, QuerySet
 
-from apps.workouts.models import Equipment, Exercise, ExerciseCategory, MuscleGroup
+from apps.workouts.models import Exercise, WorkoutExercise, WorkoutTemplate
 
-
-def get_exercise_by_id(exercise_id: UUID) -> Exercise | None:
-    """
-    Return an exercise by its ID.
-    """
-    return Exercise.objects.active().filter(id=exercise_id).first()
+# ==========================================================
+# Exercise
+# ==========================================================
 
 
-def get_exercise_by_name(name: str) -> Exercise | None:
-    """
-    Return an exercise by name.
-    """
-    return Exercise.objects.active().filter(name__iexact=name).first()
+def get_exercise_by_id(
+    exercise_id: UUID,
+) -> Exercise | None:
+    return (
+        Exercise.objects.active()
+        .filter(
+            id=exercise_id,
+        )
+        .first()
+    )
 
 
 def get_active_exercises() -> QuerySet[Exercise]:
-    """
-    Return all active exercises.
-    """
     return Exercise.objects.active()
 
 
-def get_beginner_exercises() -> QuerySet[Exercise]:
-    return Exercise.objects.beginner()
-
-
-def get_intermediate_exercises() -> QuerySet[Exercise]:
-    return Exercise.objects.intermediate()
-
-
-def get_advanced_exercises() -> QuerySet[Exercise]:
-    return Exercise.objects.advanced()
-
-
-def get_exercises_by_muscle_group(
-    muscle_group: MuscleGroup,
+def search_exercises(
+    query: str,
 ) -> QuerySet[Exercise]:
-    return Exercise.objects.by_muscle_group(
-        muscle_group,
-    )
-
-
-def get_exercises_by_equipment(
-    equipment: Equipment,
-) -> QuerySet[Exercise]:
-    return Exercise.objects.by_equipment(
-        equipment,
-    )
-
-
-def get_exercises_by_category(
-    category: ExerciseCategory,
-) -> QuerySet[Exercise]:
-    return Exercise.objects.by_category(
-        category,
-    )
-
-
-def search_exercises(query: str):
     return Exercise.objects.search(query)
 
 
-def get_inactive_exercises():
-    return Exercise.objects.inactive()
+# ==========================================================
+# WorkoutTemplate
+# ==========================================================
+
+
+def get_workout_template_by_id(
+    template_id: UUID,
+) -> WorkoutTemplate | None:
+    return WorkoutTemplate.objects.filter(
+        id=template_id,
+        is_active=True,
+    ).first()
+
+
+def get_active_workout_templates() -> QuerySet[WorkoutTemplate]:
+    return WorkoutTemplate.objects.filter(
+        is_active=True,
+    )
+
+
+def search_workout_templates(
+    query: str,
+) -> QuerySet[WorkoutTemplate]:
+    return WorkoutTemplate.objects.filter(
+        Q(name__icontains=query) | Q(description__icontains=query),
+        is_active=True,
+    )
+
+
+# ==========================================================
+# WorkoutExercise
+# ==========================================================
+
+
+def get_workout_exercises(
+    template: WorkoutTemplate,
+) -> QuerySet[WorkoutExercise]:
+    return (
+        WorkoutExercise.objects.filter(
+            workout_template=template,
+        )
+        .select_related(
+            "exercise",
+        )
+        .order_by(
+            "order",
+        )
+    )
+
+
+def get_workout_exercise_by_id(
+    workout_exercise_id: UUID,
+) -> WorkoutExercise | None:
+    return (
+        WorkoutExercise.objects.select_related(
+            "exercise",
+            "workout_template",
+        )
+        .filter(
+            id=workout_exercise_id,
+        )
+        .first()
+    )

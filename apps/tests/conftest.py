@@ -1,11 +1,7 @@
 import pytest
 from rest_framework.test import APIClient
 
-from apps.tests.factories import (
-    ExerciseFactory,
-    TenantFactory,
-    UserFactory,
-)
+from apps.tests.factories import ExerciseFactory, TenantFactory, UserFactory
 
 
 @pytest.fixture

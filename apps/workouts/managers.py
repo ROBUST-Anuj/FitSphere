@@ -48,7 +48,11 @@ class ExerciseQuerySet(models.QuerySet):
         )
 
     def search(self, query: str):
-        return self.filter(Q(name__icontains=query) | Q(description__icontains=query))
+        return self.filter(
+            Q(name__icontains=query)
+            | Q(description__icontains=query)
+            | Q(instructions__icontains=query)
+        )
 
 
 ExerciseManager = models.Manager.from_queryset(

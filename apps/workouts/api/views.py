@@ -7,10 +7,16 @@ from apps.workouts.api.serializers import (
     ExerciseCreateSerializer,
     ExerciseReadSerializer,
     ExerciseUpdateSerializer,
+    WorkoutExerciseCreateSerializer,
+    WorkoutExerciseReadSerializer,
+    WorkoutExerciseUpdateSerializer,
+    WorkoutTemplateCreateSerializer,
+    WorkoutTemplateReadSerializer,
+    WorkoutTemplateUpdateSerializer,
 )
 from apps.workouts.filters import ExerciseFilter
-from apps.workouts.models import Exercise
-from apps.workouts.services import ExerciseService
+from apps.workouts.models import Exercise, WorkoutExercise, WorkoutTemplate
+from apps.workouts.services import ExerciseService, WorkoutExerciseService, WorkoutTemplateService
 
 
 class ExerciseListAPIView(generics.ListCreateAPIView):
@@ -77,4 +83,100 @@ class ExerciseDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     def perform_destroy(self, instance):
         ExerciseService.deactivate_exercise(
             exercise=instance,
+        )
+
+
+class WorkoutTemplateListAPIView(generics.ListCreateAPIView):
+
+    def get_queryset(self):
+        return WorkoutTemplate.objects.filter(
+            is_active=True,
+        )
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return WorkoutTemplateCreateSerializer
+
+        return WorkoutTemplateReadSerializer
+
+    def perform_create(self, serializer):
+        WorkoutTemplateService.create_workout_template(
+            **serializer.validated_data,
+        )
+
+
+class WorkoutTemplateDetailAPIView(
+    generics.RetrieveUpdateDestroyAPIView,
+):
+
+    def get_queryset(self):
+        return WorkoutTemplate.objects.filter(
+            is_active=True,
+        )
+
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return WorkoutTemplateUpdateSerializer
+
+        return WorkoutTemplateReadSerializer
+
+    def perform_update(self, serializer):
+        WorkoutTemplateService.update_workout_template(
+            workout_template=self.get_object(),
+            **serializer.validated_data,
+        )
+
+    def perform_destroy(self, instance):
+        WorkoutTemplateService.deactivate_workout_template(
+            workout_template=instance,
+        )
+
+
+class WorkoutExerciseListAPIView(
+    generics.ListCreateAPIView,
+):
+
+    def get_queryset(self):
+        return WorkoutExercise.objects.select_related(
+            "exercise",
+            "workout_template",
+        )
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return WorkoutExerciseCreateSerializer
+
+        return WorkoutExerciseReadSerializer
+
+    def perform_create(self, serializer):
+        WorkoutExerciseService.add_exercise(
+            **serializer.validated_data,
+        )
+
+
+class WorkoutExerciseDetailAPIView(
+    generics.RetrieveUpdateDestroyAPIView,
+):
+
+    def get_queryset(self):
+        return WorkoutExercise.objects.select_related(
+            "exercise",
+            "workout_template",
+        )
+
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return WorkoutExerciseUpdateSerializer
+
+        return WorkoutExerciseReadSerializer
+
+    def perform_update(self, serializer):
+        WorkoutExerciseService.update_workout_exercise(
+            workout_exercise=self.get_object(),
+            **serializer.validated_data,
+        )
+
+    def perform_destroy(self, instance):
+        WorkoutExerciseService.remove_exercise(
+            workout_exercise=instance,
         )
